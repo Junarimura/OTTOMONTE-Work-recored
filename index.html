@@ -6,7 +6,16 @@
 <title>BlueLog Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--berry:#2e1065;--berry-mid:#6d28d9;--berry-light:#c4b5fd;--berry-pale:#ede9ff;--leaf:#064e3b;--leaf-mid:#059669;--leaf-light:#a7f3d0;--amber:#78350f;--amber-mid:#d97706;--amber-pale:#fef3c7;--rose:#881337;--rose-mid:#e11d48;--rose-pale:#ffe4e6;--blue:#1e3a5f;--blue-mid:#2563eb;--blue-pale:#dbeafe;--ink:#0f1923;--paper:#f5f3ee;--cream:#ede9e0;--line:#d4cfc5;--r:12px;--shadow:0 2px 16px rgba(15,25,35,.10);--font:'Noto Sans JP',sans-serif;--mono:'DM Mono',monospace}
+:root{
+  --berry:#2e1065;--berry-mid:#6d28d9;--berry-light:#c4b5fd;--berry-pale:#ede9ff;
+  --leaf:#064e3b;--leaf-mid:#059669;--leaf-light:#a7f3d0;
+  --amber:#78350f;--amber-mid:#d97706;--amber-pale:#fef3c7;
+  --rose:#881337;--rose-mid:#e11d48;--rose-pale:#ffe4e6;
+  --blue:#1e3a5f;--blue-mid:#2563eb;--blue-pale:#dbeafe;
+  --ink:#0f1923;--paper:#f5f3ee;--cream:#ede9e0;--line:#d4cfc5;
+  --r:12px;--shadow:0 2px 16px rgba(15,25,35,.10);
+  --font:'Noto Sans JP',sans-serif;--mono:'DM Mono',monospace;
+}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height:100vh;overflow-x:hidden}
 .hdr{background:var(--berry);color:white;padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
@@ -15,6 +24,7 @@ body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height
 .hdr-title{font-size:1.05rem;font-weight:700}
 .hdr-sub{font-size:.65rem;opacity:.65;margin-top:1px;font-family:var(--mono)}
 .hdr-badge{background:var(--berry-mid);color:white;font-size:.68rem;padding:4px 10px;border-radius:20px;font-family:var(--mono)}
+.sync-bar{padding:4px 16px;font-size:.72rem;font-weight:500;text-align:center;min-height:28px;display:flex;align-items:center;justify-content:center;gap:6px}
 .bnav{position:fixed;bottom:0;left:0;right:0;background:var(--ink);display:flex;border-top:1px solid #2a3542;z-index:50;padding-bottom:env(safe-area-inset-bottom)}
 .bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 2px 8px;background:none;border:none;color:#6b7f8e;cursor:pointer;font-size:.58rem;font-family:var(--font);gap:3px}
 .bnav-btn.on{color:var(--berry-light)}
@@ -56,7 +66,7 @@ textarea{resize:vertical;min-height:72px}
 .stat-l{font-size:.6rem;color:#888;margin-top:3px}
 .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;border:1px solid var(--line)}
 table{width:100%;border-collapse:collapse;font-size:.78rem;min-width:520px}
-th{background:var(--cream);padding:8px 10px;text-align:left;font-weight:600;color:var(--berry);border-bottom:1px solid var(--line);white-space:nowrap}
+th{background:var(--cream);padding:8px 10px;text-align:left;font-weight:600;color:var(--berry);border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer}
 td{padding:8px 10px;border-bottom:1px solid #f0ece4;vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#faf8f4}
@@ -95,6 +105,9 @@ tr:hover td{background:#faf8f4}
 .csv-pre{font-family:var(--mono);font-size:.7rem;background:#1a1a2e;color:#a0f0a0;padding:14px;border-radius:9px;overflow-x:auto;white-space:pre;max-height:200px;overflow-y:auto}
 .sep{height:1px;background:var(--line);margin:10px 0}
 .bulk-area{font-family:var(--mono);font-size:.75rem;min-height:140px;background:#fafaf8;border:1.5px dashed var(--line)}
+.sel-bar{display:none;align-items:center;gap:8px;background:var(--rose-pale);border:1.5px solid var(--rose-mid);border-radius:9px;padding:8px 12px;margin-bottom:10px}
+.sel-count{font-size:.82rem;font-weight:600;color:var(--rose);flex:1}
+.chk{flex-shrink:0;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:white}
 </style>
 </head>
 <body>
@@ -109,6 +122,7 @@ tr:hover td{background:#faf8f4}
   </div>
   <div class="hdr-badge" id="hdr-count">0本</div>
 </div>
+<div class="sync-bar" id="sync-bar" style="background:#fef3c7;color:#92400e">🔄 読み込み中...</div>
 
 <div class="main">
 
@@ -123,12 +137,12 @@ tr:hover td{background:#faf8f4}
   <div class="card">
     <div class="card-hd"><div class="card-ico">⚡</div><div class="card-title">クイックアクション</div></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <button class="btn btn-berry btn-block" onclick="om('m-tree-add')">🌳 木を登録</button>
-      <button class="btn btn-mid btn-block" onclick="om('m-rec-add')">📒 作業記録</button>
-      <button class="btn btn-leaf btn-block" onclick="om('m-fert-add')">🧪 施肥記録</button>
-      <button class="btn btn-danger btn-block" onclick="om('m-pest-add')">🐛 病害虫</button>
-      <button class="btn btn-export btn-block" onclick="om('m-export')">📤 エクスポート</button>
-      <button class="btn btn-ghost btn-block" onclick="om('m-plan-add')">📅 計画追加</button>
+      <button class="btn btn-berry btn-block" onclick="openModal('m-tree-add')">🌳 木を登録</button>
+      <button class="btn btn-mid btn-block" onclick="openModal('m-rec-add')">📒 作業記録</button>
+      <button class="btn btn-leaf btn-block" onclick="openModal('m-fert-add')">🧪 施肥記録</button>
+      <button class="btn btn-danger btn-block" onclick="openModal('m-pest-add')">🐛 病害虫</button>
+      <button class="btn btn-export btn-block" onclick="openModal('m-export')">📤 エクスポート</button>
+      <button class="btn btn-ghost btn-block" onclick="openModal('m-plan-add')">📅 計画追加</button>
     </div>
   </div>
   <div class="card">
@@ -149,12 +163,12 @@ tr:hover td{background:#faf8f4}
       <div><div class="card-title">木 個体管理台帳</div><div class="card-sub">全登録木の状態管理</div></div>
     </div>
     <div class="tbl-actions">
-      <button class="btn btn-berry btn-sm" onclick="om('m-tree-add')">＋登録</button>
-      <button class="btn btn-ghost btn-sm" onclick="om('m-tree-bulk')">📋 一括登録</button>
+      <button class="btn btn-berry btn-sm" onclick="openModal('m-tree-add')">＋登録</button>
+      <button class="btn btn-ghost btn-sm" onclick="openModal('m-tree-bulk')">📋 一括</button>
       <button class="btn btn-export btn-sm" onclick="exportCSV('trees')">📤 CSV</button>
       <input type="text" id="tree-search" placeholder="🔍 検索..." style="width:110px;font-size:.75rem;padding:5px 9px;margin-left:auto" oninput="renderTreeTable()">
     </div>
-    <div class="filter-row" id="tree-filter-row">
+    <div class="filter-row">
       <div class="fchip on" onclick="treeFilter('all',this)">全て</div>
       <div class="fchip" onclick="treeFilter('良好',this)">✅ 良好</div>
       <div class="fchip" onclick="treeFilter('要観察',this)">⚠️ 要観察</div>
@@ -163,8 +177,8 @@ tr:hover td{background:#faf8f4}
     </div>
     <div class="tbl-wrap">
       <table><thead><tr>
-        <th onclick="sortTrees('id')" style="cursor:pointer">ID ⇅</th>
-        <th onclick="sortTrees('loc')" style="cursor:pointer">区画 ⇅</th>
+        <th onclick="sortTrees('id')">ID ⇅</th>
+        <th onclick="sortTrees('loc')">区画 ⇅</th>
         <th>品種</th><th>系統</th><th>植付年</th><th>樹高</th><th>状態</th><th></th>
       </tr></thead><tbody id="tree-tbody"></tbody></table>
     </div>
@@ -190,10 +204,17 @@ tr:hover td{background:#faf8f4}
       <div class="card-ico">📅</div>
       <div><div class="card-title">年間作業計画</div><div class="card-sub">タップで完了切替</div></div>
       <div style="margin-left:auto;display:flex;gap:6px">
-        <button class="btn btn-berry btn-sm" onclick="om('m-plan-add')">＋追加</button>
+        <button class="btn btn-berry btn-sm" onclick="openModal('m-plan-add')">＋追加</button>
         <button class="btn btn-export btn-sm" onclick="exportCSV('plans')">📤 CSV</button>
       </div>
     </div>
+    <div class="sel-bar" id="plan-sel-bar">
+      <span class="sel-count" id="plan-sel-count">0件選択中</span>
+      <button class="btn btn-ghost btn-sm" onclick="planSelAll()">全選択</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteSelPlans()">🗑️ 削除</button>
+      <button class="btn btn-ghost btn-sm" onclick="planSelCancel()">✕</button>
+    </div>
+    <div style="margin-bottom:8px"><button class="btn btn-ghost btn-sm" id="plan-sel-toggle" onclick="togglePlanSelMode()">☑️ 選択モード</button></div>
     <div class="plan-tl" id="annual-plan"></div>
   </div>
 </div>
@@ -205,7 +226,7 @@ tr:hover td{background:#faf8f4}
       <div class="card-ico">📒</div>
       <div><div class="card-title">作業実績記録</div></div>
       <div style="margin-left:auto;display:flex;gap:6px">
-        <button class="btn btn-mid btn-sm" onclick="om('m-rec-add')">＋記録</button>
+        <button class="btn btn-mid btn-sm" onclick="openModal('m-rec-add')">＋記録</button>
         <button class="btn btn-export btn-sm" onclick="exportCSV('records')">📤 CSV</button>
       </div>
     </div>
@@ -217,6 +238,13 @@ tr:hover td{background:#faf8f4}
       <div class="fchip" onclick="recFilter('防除',this)">🛡️ 防除</div>
       <div class="fchip" onclick="recFilter('その他',this)">📌 他</div>
     </div>
+    <div class="sel-bar" id="rec-sel-bar">
+      <span class="sel-count" id="rec-sel-count">0件選択中</span>
+      <button class="btn btn-ghost btn-sm" onclick="recSelAll()">全選択</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteSelRecs()">🗑️ 削除</button>
+      <button class="btn btn-ghost btn-sm" onclick="recSelCancel()">✕</button>
+    </div>
+    <div style="margin-bottom:8px"><button class="btn btn-ghost btn-sm" id="rec-sel-toggle" onclick="toggleRecSelMode()">☑️ 選択モード</button></div>
     <input type="text" id="rec-search" placeholder="🔍 検索..." style="margin-bottom:10px" oninput="renderRecs()">
     <div id="recs-list"></div>
   </div>
@@ -227,19 +255,26 @@ tr:hover td{background:#faf8f4}
   <div class="card">
     <div class="card-hd">
       <div class="card-ico">🧪</div>
-      <div><div class="card-title">施肥計画・実績</div></div>
+      <div><div class="card-title">施肥実績</div></div>
       <div style="margin-left:auto;display:flex;gap:6px">
-        <button class="btn btn-leaf btn-sm" onclick="om('m-fert-add')">＋記録</button>
+        <button class="btn btn-leaf btn-sm" onclick="openModal('m-fert-add')">＋記録</button>
         <button class="btn btn-export btn-sm" onclick="exportCSV('fertilizers')">📤 CSV</button>
       </div>
     </div>
+    <div class="sel-bar" id="fert-sel-bar">
+      <span class="sel-count" id="fert-sel-count">0件選択中</span>
+      <button class="btn btn-ghost btn-sm" onclick="fertSelAll()">全選択</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteSelFerts()">🗑️ 削除</button>
+      <button class="btn btn-ghost btn-sm" onclick="fertSelCancel()">✕</button>
+    </div>
+    <div style="margin-bottom:8px"><button class="btn btn-ghost btn-sm" id="fert-sel-toggle" onclick="toggleFertSelMode()">☑️ 選択モード</button></div>
     <div id="fert-list"></div>
   </div>
   <div class="card">
     <div class="card-hd"><div class="card-ico">📊</div><div class="card-title">年間施肥計画</div></div>
     <div id="fert-plan-list"></div>
     <div class="sep"></div>
-    <button class="btn btn-ghost btn-sm" onclick="om('m-fert-plan-add')">＋施肥計画を追加</button>
+    <button class="btn btn-ghost btn-sm" onclick="openModal('m-fert-plan-add')">＋施肥計画を追加</button>
   </div>
 </div>
 
@@ -250,7 +285,7 @@ tr:hover td{background:#faf8f4}
       <div class="card-ico">🐛</div>
       <div><div class="card-title">病害虫対応記録</div></div>
       <div style="margin-left:auto;display:flex;gap:6px">
-        <button class="btn btn-danger btn-sm" onclick="om('m-pest-add')">＋記録</button>
+        <button class="btn btn-danger btn-sm" onclick="openModal('m-pest-add')">＋記録</button>
         <button class="btn btn-export btn-sm" onclick="exportCSV('pests')">📤 CSV</button>
       </div>
     </div>
@@ -260,6 +295,13 @@ tr:hover td{background:#faf8f4}
       <div class="fchip" onclick="pestFilter('経過観察',this)">⚠️ 観察中</div>
       <div class="fchip" onclick="pestFilter('解決',this)">✅ 解決済</div>
     </div>
+    <div class="sel-bar" id="pest-sel-bar">
+      <span class="sel-count" id="pest-sel-count">0件選択中</span>
+      <button class="btn btn-ghost btn-sm" onclick="pestSelAll()">全選択</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteSelPests()">🗑️ 削除</button>
+      <button class="btn btn-ghost btn-sm" onclick="pestSelCancel()">✕</button>
+    </div>
+    <div style="margin-bottom:8px"><button class="btn btn-ghost btn-sm" id="pest-sel-toggle" onclick="togglePestSelMode()">☑️ 選択モード</button></div>
     <div id="pest-list"></div>
   </div>
 </div>
@@ -275,16 +317,38 @@ tr:hover td{background:#faf8f4}
   <button class="bnav-btn" onclick="switchTab('pest',this)"><span class="ico">🐛</span>病害虫</button>
 </nav>
 
-<!-- MODAL: 木登録 -->
+<!-- MODALS -->
 <div class="modal-bg" id="m-tree-add"><div class="modal">
   <div class="modal-handle"></div>
   <div class="modal-title">🌳 木を登録</div>
-  <div class="row2">
-    <div class="fg"><label>木ID *</label><input id="ta-id" placeholder="例: A-001"></div>
-    <div class="fg"><label>区画</label><input id="ta-loc" placeholder="例: 北A列1番"></div>
+  <div class="fg" style="background:var(--berry-pale);border:1.5px solid var(--berry-light);border-radius:9px;padding:10px 14px">
+    <div style="font-size:.7rem;color:var(--berry-mid);margin-bottom:4px">木ID（自動生成）</div>
+    <div id="ta-id-preview" style="font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--berry)">— 下の項目を選択してください —</div>
+  </div>
+  <div class="row3">
+    <div class="fg"><label>圃場名 *</label>
+      <select id="ta-field" onchange="buildTreeId()">
+        <option value="">選択</option>
+        <option>圃場A</option><option>圃場B</option><option>圃場C1</option><option>圃場C2</option>
+        <option>圃場D</option><option>圃場E</option><option>圃場F</option><option>圃場G</option>
+      </select>
+    </div>
+    <div class="fg"><label>列 (A〜Z) *</label>
+      <select id="ta-col" onchange="buildTreeId()">
+        <option value="">選択</option>
+        <option>A</option><option>B</option><option>C</option><option>D</option><option>E</option>
+        <option>F</option><option>G</option><option>H</option><option>I</option><option>J</option>
+        <option>K</option><option>L</option><option>M</option><option>N</option><option>O</option>
+        <option>P</option><option>Q</option><option>R</option><option>S</option><option>T</option>
+        <option>U</option><option>V</option><option>W</option><option>X</option><option>Y</option><option>Z</option>
+      </select>
+    </div>
+    <div class="fg"><label>行番号 *</label>
+      <input type="number" id="ta-row" placeholder="1" min="1" max="99" oninput="buildTreeId()">
+    </div>
   </div>
   <div class="row2">
-    <div class="fg"><label>品種 *</label><input id="ta-var" placeholder="例: ブライトウェル"></div>
+    <div class="fg"><label>品種</label><input id="ta-var" placeholder="例: ブライトウェル"></div>
     <div class="fg"><label>植付年</label><input type="number" id="ta-year" placeholder="2020"></div>
   </div>
   <div class="row2">
@@ -303,32 +367,28 @@ tr:hover td{background:#faf8f4}
   <div class="fg"><label>備考</label><textarea id="ta-note" style="min-height:56px"></textarea></div>
   <div class="fg">
     <label>写真</label>
-    <div class="photo-drop" onclick="document.getElementById('ta-photos').click()">
-      <div>📷 写真を追加</div>
+    <div class="photo-drop" onclick="document.getElementById('ta-photos').click()"><div>📷 写真を追加</div>
       <input type="file" id="ta-photos" multiple accept="image/*" onchange="prevPhotos(this,'ta-pgrid')">
     </div>
     <div class="photo-grid" id="ta-pgrid"></div>
   </div>
   <div class="modal-footer">
-    <button class="btn btn-ghost" style="flex:1" onclick="cm('m-tree-add')">キャンセル</button>
+    <button class="btn btn-ghost" style="flex:1" onclick="closeModal('m-tree-add')">キャンセル</button>
     <button class="btn btn-berry" style="flex:2" onclick="saveTree()">✅ 登録</button>
   </div>
 </div></div>
 
-<!-- MODAL: 一括登録 -->
 <div class="modal-bg" id="m-tree-bulk"><div class="modal">
   <div class="modal-handle"></div>
   <div class="modal-title">📋 木の一括登録</div>
   <div style="font-size:.78rem;color:#666;margin-bottom:8px">1行1木：ID, 区画, 品種, 系統, 植付年, 状態</div>
-  <textarea class="bulk-area" id="bulk-text" placeholder="A-001, 北A列1番, ブライトウェル, ラビットアイ, 2018, 良好
-A-002, 北A列2番, ティフブルー, ラビットアイ, 2019, 良好"></textarea>
+  <textarea class="bulk-area" id="bulk-text" placeholder="圃場A-A-01, 圃場A A列1番, ブライトウェル, ラビットアイ, 2018, 良好"></textarea>
   <div class="modal-footer">
-    <button class="btn btn-ghost" style="flex:1" onclick="cm('m-tree-bulk')">キャンセル</button>
+    <button class="btn btn-ghost" style="flex:1" onclick="closeModal('m-tree-bulk')">キャンセル</button>
     <button class="btn btn-berry" style="flex:2" onclick="saveBulkTrees()">✅ 一括登録</button>
   </div>
 </div></div>
 
-<!-- MODAL: 作業計画 -->
 <div class="modal-bg" id="m-plan-add"><div class="modal">
   <div class="modal-handle"></div>
   <div class="modal-title">📅 作業予定を追加</div>
@@ -342,17 +402,15 @@ A-002, 北A列2番, ティフブルー, ラビットアイ, 2019, 良好"></text
   </div>
   <div class="fg"><label>作業内容 *</label><input id="pa-task" placeholder="例: 休眠期剪定"></div>
   <div class="row2">
-    <div class="fg"><label>担当者</label><input id="pa-person" placeholder="例: 田中、全員"></div>
+    <div class="fg"><label>担当者</label><input id="pa-person" placeholder="例: 田中"></div>
     <div class="fg"><label>工数(人日)</label><input type="number" id="pa-manday" placeholder="5" step="0.5"></div>
   </div>
-  <div class="fg"><label>備考</label><textarea id="pa-note" style="min-height:56px"></textarea></div>
   <div class="modal-footer">
-    <button class="btn btn-ghost" style="flex:1" onclick="cm('m-plan-add')">キャンセル</button>
+    <button class="btn btn-ghost" style="flex:1" onclick="closeModal('m-plan-add')">キャンセル</button>
     <button class="btn btn-berry" style="flex:2" onclick="savePlan()">✅ 追加</button>
   </div>
 </div></div>
 
-<!-- MODAL: 作業記録 -->
 <div class="modal-bg" id="m-rec-add"><div class="modal">
   <div class="modal-handle"></div>
   <div class="modal-title">📒 作業実績を記録</div>
@@ -376,19 +434,17 @@ A-002, 北A列2番, ティフブルー, ラビットアイ, 2019, 良好"></text
   <div class="fg"><label>収量（収穫の場合）</label><input id="ra-yield" placeholder="例: 32kg"></div>
   <div class="fg">
     <label>写真</label>
-    <div class="photo-drop" onclick="document.getElementById('ra-photos').click()">
-      <div>📷 作業写真</div>
+    <div class="photo-drop" onclick="document.getElementById('ra-photos').click()"><div>📷 作業写真</div>
       <input type="file" id="ra-photos" multiple accept="image/*" onchange="prevPhotos(this,'ra-pgrid')">
     </div>
     <div class="photo-grid" id="ra-pgrid"></div>
   </div>
   <div class="modal-footer">
-    <button class="btn btn-ghost" style="flex:1" onclick="cm('m-rec-add')">キャンセル</button>
+    <button class="btn btn-ghost" style="flex:1" onclick="closeModal('m-rec-add')">キャンセル</button>
     <button class="btn btn-mid" style="flex:2" onclick="saveRec()">✅ 保存</button>
   </div>
 </div></div>
 
-<!-- MODAL: 施肥記録 -->
 <div class="modal-bg" id="m-fert-add"><div class="modal">
   <div class="modal-handle"></div>
   <div class="modal-title">🧪 施肥を記録</div>
@@ -416,12 +472,11 @@ A-002, 北A列2番, ティフブルー, ラビットアイ, 2019, 良好"></text
   </div>
   <div class="fg"><label>備考</label><textarea id="fa-note" style="min-height:56px"></textarea></div>
   <div class="modal-footer">
-    <button class="btn btn-ghost" style="flex:1" onclick="cm('m-fert-add')">キャンセル</button>
+    <button class="btn btn-ghost" style="flex:1" onclick="closeModal('m-fert-add')">キャンセル</button>
     <button class="btn btn-leaf" style="flex:2" onclick="saveFert()">✅ 保存</button>
   </div>
 </div></div>
 
-<!-- MODAL: 施肥計画 -->
 <div class="modal-bg" id="m-fert-plan-add"><div class="modal">
   <div class="modal-handle"></div>
   <div class="modal-title">📊 施肥計画を追加</div>
@@ -438,14 +493,12 @@ A-002, 北A列2番, ティフブルー, ラビットアイ, 2019, 良好"></text
     <div class="fg"><label>予定量(g/株)</label><input type="number" id="fp-amount" placeholder="50"></div>
     <div class="fg"><label>目標pH</label><input type="number" id="fp-ph" placeholder="4.5" step="0.1"></div>
   </div>
-  <div class="fg"><label>備考</label><textarea id="fp-note" style="min-height:50px"></textarea></div>
   <div class="modal-footer">
-    <button class="btn btn-ghost" style="flex:1" onclick="cm('m-fert-plan-add')">キャンセル</button>
+    <button class="btn btn-ghost" style="flex:1" onclick="closeModal('m-fert-plan-add')">キャンセル</button>
     <button class="btn btn-leaf" style="flex:2" onclick="saveFertPlan()">✅ 追加</button>
   </div>
 </div></div>
 
-<!-- MODAL: 病害虫 -->
 <div class="modal-bg" id="m-pest-add"><div class="modal">
   <div class="modal-handle"></div>
   <div class="modal-title">🐛 病害虫対応を記録</div>
@@ -471,375 +524,638 @@ A-002, 北A列2番, ティフブルー, ラビットアイ, 2019, 良好"></text
   </div>
   <div class="fg">
     <label>写真（症状）</label>
-    <div class="photo-drop" onclick="document.getElementById('pea-photos').click()">
-      <div>📷 症状の写真</div>
+    <div class="photo-drop" onclick="document.getElementById('pea-photos').click()"><div>📷 症状の写真</div>
       <input type="file" id="pea-photos" multiple accept="image/*" onchange="prevPhotos(this,'pea-pgrid')">
     </div>
     <div class="photo-grid" id="pea-pgrid"></div>
   </div>
   <div class="modal-footer">
-    <button class="btn btn-ghost" style="flex:1" onclick="cm('m-pest-add')">キャンセル</button>
+    <button class="btn btn-ghost" style="flex:1" onclick="closeModal('m-pest-add')">キャンセル</button>
     <button class="btn btn-danger" style="flex:2" onclick="savePest()">✅ 保存</button>
   </div>
 </div></div>
 
-<!-- MODAL: エクスポート -->
 <div class="modal-bg" id="m-export"><div class="modal">
   <div class="modal-handle"></div>
   <div class="modal-title">📤 データエクスポート</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
-    <button class="btn btn-export btn-block" onclick="exportCSV('trees')">🌳 木台帳 CSV</button>
-    <button class="btn btn-export btn-block" onclick="exportCSV('plans')">📅 作業計画 CSV</button>
-    <button class="btn btn-export btn-block" onclick="exportCSV('records')">📒 作業記録 CSV</button>
-    <button class="btn btn-export btn-block" onclick="exportCSV('fertilizers')">🧪 施肥記録 CSV</button>
-    <button class="btn btn-export btn-block" onclick="exportCSV('pests')">🐛 病害虫 CSV</button>
+    <button class="btn btn-export btn-block" onclick="exportCSV('trees')">🌳 木台帳</button>
+    <button class="btn btn-export btn-block" onclick="exportCSV('plans')">📅 作業計画</button>
+    <button class="btn btn-export btn-block" onclick="exportCSV('records')">📒 作業記録</button>
+    <button class="btn btn-export btn-block" onclick="exportCSV('fertilizers')">🧪 施肥記録</button>
+    <button class="btn btn-export btn-block" onclick="exportCSV('pests')">🐛 病害虫</button>
     <button class="btn btn-mid btn-block" onclick="exportAllJSON()">📦 全データ JSON</button>
   </div>
   <div class="csv-pre" id="csv-preview">← ボタンをタップするとプレビューが表示されます</div>
-  <div class="modal-footer">
-    <button class="btn btn-ghost btn-block" onclick="cm('m-export')">閉じる</button>
-  </div>
+  <div class="modal-footer"><button class="btn btn-ghost btn-block" onclick="closeModal('m-export')">閉じる</button></div>
 </div></div>
 
 <script>
-let S={trees:[],plans:[],records:[],fertilizers:[],fertPlans:[],pests:[]};
-let treeFilterVal='all',recFilterVal='all',pestFilterVal='all';
-let treeSortKey='id',treeSortAsc=true;
-let selectedTree=null;
+// ============================================================
+// Google Sheets API
+// ============================================================
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbwmbJ3HO8JfKP3_aAugD3TLWAW3TgAxeM0BER4pkewkPSTBDKQcPoguFoLDIMIjSNgzvA/exec';
 
-function load(){try{const d=localStorage.getItem('blg_pro_v1');if(d)S=JSON.parse(d)}catch(e){}}
-function save(){try{localStorage.setItem('blg_pro_v1',JSON.stringify(S))}catch(e){}}
-function om(id){document.getElementById(id).classList.add('on')}
-function cm(id){document.getElementById(id).classList.remove('on')}
-function v(id){return document.getElementById(id).value}
-function clr(ids){ids.forEach(id=>{const e=document.getElementById(id);if(e)e.value=''})}
+var S = {trees:[],plans:[],records:[],fertilizers:[],fertPlans:[],pests:[]};
+var treeFilterVal='all', recFilterVal='all', pestFilterVal='all';
+var treeSortKey='id', treeSortAsc=true;
+var selectedTree=null;
+var planSelMode=false, recSelMode=false, fertSelMode=false, pestSelMode=false;
+var planSel=new Set(), recSel=new Set(), fertSel=new Set(), pestSel=new Set();
 
-document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('on')}));
+function syncStatus(type, msg) {
+  var el = document.getElementById('sync-bar');
+  var styles = {
+    loading: 'background:#fef3c7;color:#92400e',
+    saving:  'background:#dbeafe;color:#1e3a8a',
+    ok:      'background:#d1fae5;color:#065f46',
+    error:   'background:#fee2e2;color:#991b1b'
+  };
+  var icons = {loading:'🔄',saving:'💾',ok:'✅',error:'❌'};
+  el.style.cssText = styles[type] || styles.ok;
+  el.innerHTML = (icons[type]||'') + ' ' + msg;
+}
 
-function switchTab(name,btn){
-  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
-  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('on'));
+function gasCall(params, cb) {
+  var url = GAS_URL + '?' + Object.keys(params).map(function(k){
+    return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);
+  }).join('&');
+  fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(j){ if(j.ok) cb(null,j.data); else cb(j.error||'エラー'); })
+    .catch(function(e){ cb(e.message||'通信エラー'); });
+}
+
+function gasPost(params, cb) {
+  var fd = new FormData();
+  Object.keys(params).forEach(function(k){ fd.append(k, params[k]); });
+  fetch(GAS_URL, {method:'POST', body:fd})
+    .then(function(r){ return r.json(); })
+    .then(function(j){ if(j.ok) cb(null,j.data); else cb(j.error||'エラー'); })
+    .catch(function(e){ cb(e.message||'通信エラー'); });
+}
+
+function loadAll() {
+  syncStatus('loading','サーバーからデータを読み込み中...');
+  gasCall({action:'getAllSheets'}, function(err, data) {
+    if (err) {
+      var local = localStorage.getItem('blg_v1');
+      if (local) try { Object.assign(S, JSON.parse(local)); } catch(e){}
+      syncStatus('error','オフライン：ローカルデータを使用中');
+    } else {
+      S.trees       = data.trees        || [];
+      S.plans       = data.plans        || [];
+      S.records     = data.records      || [];
+      S.fertilizers = data.fertilizers  || [];
+      S.pests       = data.pests        || [];
+      var fp = localStorage.getItem('blg_fertPlans');
+      if (fp) try { S.fertPlans = JSON.parse(fp); } catch(e){}
+      syncStatus('ok','読み込み完了（'+new Date().toLocaleTimeString('ja-JP')+'）');
+    }
+    renderAll();
+  });
+}
+
+function pushItem(sheet, item) {
+  localStorage.setItem('blg_v1', JSON.stringify(S));
+  syncStatus('saving','保存中...');
+  gasPost({action:'save', sheet:sheet, data:JSON.stringify(item)}, function(err) {
+    if (err) syncStatus('error','オフライン：ローカルに保存しました');
+    else syncStatus('ok','保存しました（'+new Date().toLocaleTimeString('ja-JP')+'）');
+  });
+}
+
+function removeItems(sheet, ids, cb) {
+  localStorage.setItem('blg_v1', JSON.stringify(S));
+  syncStatus('saving',ids.length+'件を削除中...');
+  var done = 0;
+  if (ids.length === 0) { syncStatus('ok','削除しました'); if(cb)cb(); return; }
+  ids.forEach(function(id) {
+    gasPost({action:'delete', sheet:sheet, id:String(id)}, function(err) {
+      done++;
+      if (done === ids.length) {
+        if (err) syncStatus('error','オフライン：ローカルから削除しました');
+        else syncStatus('ok','削除しました（'+new Date().toLocaleTimeString('ja-JP')+'）');
+        if(cb)cb();
+      }
+    });
+  });
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function openModal(id) { document.getElementById(id).classList.add('on'); }
+function closeModal(id) { document.getElementById(id).classList.remove('on'); }
+function val(id) { return document.getElementById(id).value; }
+function clrFields(ids) { ids.forEach(function(id){ var e=document.getElementById(id); if(e)e.value=''; }); }
+
+document.querySelectorAll('.modal-bg').forEach(function(m){
+  m.addEventListener('click', function(e){ if(e.target===m) m.classList.remove('on'); });
+});
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.sec').forEach(function(s){ s.classList.remove('on'); });
+  document.querySelectorAll('.bnav-btn').forEach(function(b){ b.classList.remove('on'); });
   document.getElementById('s-'+name).classList.add('on');
   btn.classList.add('on');
 }
 
-function prevPhotos(input,gid){
-  const g=document.getElementById(gid);g.innerHTML='';
-  Array.from(input.files).slice(0,5).forEach(f=>{
-    const r=new FileReader();
-    r.onload=e=>{const img=document.createElement('img');img.className='photo-thumb';img.src=e.target.result;g.appendChild(img)};
+function prevPhotos(input, gid) {
+  var g = document.getElementById(gid); g.innerHTML='';
+  Array.from(input.files).slice(0,5).forEach(function(f){
+    var r=new FileReader();
+    r.onload=function(e){ var img=document.createElement('img'); img.className='photo-thumb'; img.src=e.target.result; g.appendChild(img); };
     r.readAsDataURL(f);
   });
 }
-async function getB64(inputId){
-  return new Promise(res=>{
-    const inp=document.getElementById(inputId);
-    if(!inp||!inp.files.length)return res([]);
-    const results=[];let cnt=0;
-    const files=Array.from(inp.files).slice(0,5);
-    if(!files.length)return res([]);
-    files.forEach(f=>{const r=new FileReader();r.onload=e=>{results.push(e.target.result);if(++cnt===files.length)res(results)};r.readAsDataURL(f)});
+
+function getPhotos(inputId, cb) {
+  var inp = document.getElementById(inputId);
+  if (!inp || !inp.files.length) { cb([]); return; }
+  var files = Array.from(inp.files).slice(0,5);
+  var results=[]; var done=0;
+  files.forEach(function(f){
+    var r=new FileReader();
+    r.onload=function(e){ results.push(e.target.result); done++; if(done===files.length) cb(results); };
+    r.readAsDataURL(f);
   });
 }
 
-// TREES
-async function saveTree(){
-  const id=v('ta-id').trim();if(!id)return alert('木IDを入力してください');
-  const photos=await getB64('ta-photos');
-  const idx=S.trees.findIndex(t=>t.id===id);
-  const obj={id,loc:v('ta-loc'),variety:v('ta-var'),type:v('ta-type'),year:v('ta-year'),status:v('ta-status'),height:v('ta-h'),width:v('ta-w'),stems:v('ta-stems'),note:v('ta-note'),photos,createdAt:new Date().toISOString()};
-  if(idx>=0)S.trees[idx]=obj;else S.trees.push(obj);
-  clr(['ta-id','ta-loc','ta-var','ta-year','ta-h','ta-w','ta-stems','ta-note']);
-  document.getElementById('ta-photos').value='';document.getElementById('ta-pgrid').innerHTML='';
-  cm('m-tree-add');save();renderAll();
+function chkBox(checked) {
+  return '<div class="chk" style="border:2px solid '+(checked?'var(--rose-mid)':'var(--line)')
+    +';background:'+(checked?'var(--rose-mid)':'white')+'">'+(checked?'✓':'')+'</div>';
 }
-function saveBulkTrees(){
-  const txt=v('bulk-text').trim();if(!txt)return;
-  let added=0;
-  txt.split('\n').filter(l=>l.trim()).forEach(line=>{
-    const p=line.split(',').map(x=>x.trim());
-    if(p[0]&&!S.trees.find(t=>t.id===p[0])){
-      S.trees.push({id:p[0],loc:p[1]||'',variety:p[2]||'',type:p[3]||'',year:p[4]||'',status:p[5]||'良好',photos:[],createdAt:new Date().toISOString()});
-      added++;
+
+function selToggleBtn(id, active) {
+  var btn = document.getElementById(id);
+  if (!btn) return;
+  if (active) { btn.textContent='キャンセル'; btn.style.background='var(--rose-pale)'; btn.style.color='var(--rose)'; }
+  else { btn.textContent='☑️ 選択モード'; btn.style.background=''; btn.style.color=''; }
+}
+
+// ============================================================
+// TREE ID BUILD
+// ============================================================
+function buildTreeId() {
+  var field=val('ta-field'), col=val('ta-col'), row=val('ta-row').trim();
+  var prev=document.getElementById('ta-id-preview');
+  if (!field||!col||!row) { prev.textContent='— 圃場名・列・行番号を選択してください —'; prev.style.color='var(--berry-light)'; return ''; }
+  var rowPad = String(parseInt(row)||1).padStart(2,'0');
+  var id = field+'-'+col+'-'+rowPad;
+  prev.textContent = id; prev.style.color='var(--berry)';
+  return id;
+}
+
+// ============================================================
+// TREES
+// ============================================================
+function saveTree() {
+  var id = buildTreeId();
+  if (!id) { alert('圃場名・列・行番号を選択/入力してください'); return; }
+  getPhotos('ta-photos', function(photos) {
+    var rowPad = String(parseInt(val('ta-row'))||1).padStart(2,'0');
+    var loc = val('ta-field')+' '+val('ta-col')+'列 '+rowPad+'番';
+    var obj = {id:id, loc:loc, variety:val('ta-var'), type:val('ta-type'), year:val('ta-year'),
+               status:val('ta-status'), height:val('ta-h'), width:val('ta-w'), stems:val('ta-stems'),
+               note:val('ta-note'), photos:photos, createdAt:new Date().toISOString()};
+    var idx = S.trees.findIndex(function(t){ return t.id===id; });
+    if (idx>=0) S.trees[idx]=obj; else S.trees.push(obj);
+    document.getElementById('ta-field').value='';
+    document.getElementById('ta-col').value='';
+    clrFields(['ta-row','ta-var','ta-year','ta-h','ta-w','ta-stems','ta-note']);
+    document.getElementById('ta-id-preview').textContent='— 下の項目を選択してください —';
+    document.getElementById('ta-photos').value=''; document.getElementById('ta-pgrid').innerHTML='';
+    closeModal('m-tree-add'); renderAll(); pushItem('trees', obj);
+  });
+}
+
+function saveBulkTrees() {
+  var txt=val('bulk-text').trim(); if(!txt)return;
+  var added=0;
+  txt.split('\n').filter(function(l){return l.trim();}).forEach(function(line){
+    var p=line.split(',').map(function(x){return x.trim();});
+    if (p[0] && !S.trees.find(function(t){return t.id===p[0];})) {
+      var obj={id:p[0],loc:p[1]||'',variety:p[2]||'',type:p[3]||'',year:p[4]||'',status:p[5]||'良好',photos:[],createdAt:new Date().toISOString()};
+      S.trees.push(obj); pushItem('trees',obj); added++;
     }
   });
   document.getElementById('bulk-text').value='';
-  cm('m-tree-bulk');save();renderAll();alert(added+'本を登録しました');
+  closeModal('m-tree-bulk'); renderAll(); alert(added+'本を登録しました');
 }
-function deleteSelectedTree(){
-  if(!selectedTree)return;
-  if(!confirm(selectedTree.id+'を削除しますか？'))return;
-  S.trees=S.trees.filter(t=>t.id!==selectedTree.id);
-  selectedTree=null;document.getElementById('tree-detail').style.display='none';
-  save();renderAll();
+
+function deleteSelectedTree() {
+  if (!selectedTree) return;
+  if (!confirm(selectedTree.id+'を削除しますか？')) return;
+  var delId = selectedTree.id;
+  S.trees = S.trees.filter(function(t){ return t.id!==delId; });
+  selectedTree=null; document.getElementById('tree-detail').style.display='none';
+  renderAll(); removeItems('trees',[delId]);
 }
-function editSelectedTree(){
-  if(!selectedTree)return;
-  const t=selectedTree;
-  document.getElementById('ta-id').value=t.id;document.getElementById('ta-loc').value=t.loc||'';
-  document.getElementById('ta-var').value=t.variety||'';document.getElementById('ta-year').value=t.year||'';
-  document.getElementById('ta-h').value=t.height||'';document.getElementById('ta-w').value=t.width||'';
-  document.getElementById('ta-stems').value=t.stems||'';document.getElementById('ta-note').value=t.note||'';
-  S.trees=S.trees.filter(tr=>tr.id!==t.id);selectedTree=null;
+
+function editSelectedTree() {
+  if (!selectedTree) return;
+  var t=selectedTree;
+  var m=t.id.match(/^(.+)-([A-Z])-(\d{2})$/);
+  if (m) { document.getElementById('ta-field').value=m[1]; document.getElementById('ta-col').value=m[2]; document.getElementById('ta-row').value=parseInt(m[3]); }
+  else { document.getElementById('ta-field').value=''; document.getElementById('ta-col').value=''; document.getElementById('ta-row').value=''; }
+  buildTreeId();
+  document.getElementById('ta-var').value=t.variety||''; document.getElementById('ta-year').value=t.year||'';
+  document.getElementById('ta-h').value=t.height||''; document.getElementById('ta-w').value=t.width||'';
+  document.getElementById('ta-stems').value=t.stems||''; document.getElementById('ta-note').value=t.note||'';
+  S.trees=S.trees.filter(function(tr){return tr.id!==t.id;}); selectedTree=null;
   document.getElementById('tree-detail').style.display='none';
-  save();renderTreeTable();om('m-tree-add');
+  renderTreeTable(); openModal('m-tree-add');
 }
-function treeFilter(val,el){
-  treeFilterVal=val;
-  document.querySelectorAll('#tree-filter-row .fchip').forEach(c=>c.classList.remove('on'));
-  el.classList.add('on');renderTreeTable();
+
+function treeFilter(val2, el) {
+  treeFilterVal=val2;
+  el.closest('.filter-row').querySelectorAll('.fchip').forEach(function(c){c.classList.remove('on');});
+  el.classList.add('on'); renderTreeTable();
 }
-function sortTrees(key){
-  if(treeSortKey===key)treeSortAsc=!treeSortAsc;else{treeSortKey=key;treeSortAsc=true;}
+
+function sortTrees(key) {
+  if (treeSortKey===key) treeSortAsc=!treeSortAsc; else { treeSortKey=key; treeSortAsc=true; }
   renderTreeTable();
 }
-function renderTreeTable(){
-  const q=(v('tree-search')||'').toLowerCase();
-  let trees=[...S.trees];
-  if(treeFilterVal!=='all')trees=trees.filter(t=>t.status===treeFilterVal);
-  if(q)trees=trees.filter(t=>(t.id+t.variety+t.loc+t.type).toLowerCase().includes(q));
-  trees.sort((a,b)=>{const av=a[treeSortKey]||'',bv=b[treeSortKey]||'';return treeSortAsc?av.localeCompare(bv,undefined,{numeric:true}):bv.localeCompare(av,undefined,{numeric:true})});
-  const dc={'良好':'dot-ok','要観察':'dot-watch','治療中':'dot-treat','枯死':'dot-dead'};
-  const bc={'良好':'b-green','要観察':'b-yellow','治療中':'b-red','枯死':'b-gray'};
-  document.getElementById('tree-tbody').innerHTML=trees.map(t=>`
-    <tr onclick="selectTreeRow('${t.id}')" style="cursor:pointer">
-      <td><b style="font-family:var(--mono)">${t.id}</b></td>
-      <td style="font-size:.75rem">${t.loc||'—'}</td>
-      <td>${t.variety||'—'}</td>
-      <td><span class="badge b-purple" style="font-size:.62rem">${t.type||'—'}</span></td>
-      <td style="font-family:var(--mono)">${t.year||'—'}</td>
-      <td style="font-family:var(--mono)">${t.height?t.height+'cm':'—'}</td>
-      <td><span class="dot ${dc[t.status]||'dot-ok'}"></span> <span class="badge ${bc[t.status]||'b-green'}" style="font-size:.62rem">${t.status}</span></td>
-      <td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();selectTreeRow('${t.id}')">詳細</button></td>
-    </tr>`).join('');
-  document.getElementById('tree-count-label').textContent=`表示:${trees.length}本 / 合計:${S.trees.length}本`;
+
+function renderTreeTable() {
+  var q=(val('tree-search')||'').toLowerCase();
+  var trees=S.trees.slice();
+  if (treeFilterVal!=='all') trees=trees.filter(function(t){return t.status===treeFilterVal;});
+  if (q) trees=trees.filter(function(t){return (t.id+t.variety+t.loc+t.type).toLowerCase().includes(q);});
+  trees.sort(function(a,b){ var av=a[treeSortKey]||'',bv=b[treeSortKey]||''; return treeSortAsc?av.localeCompare(bv,undefined,{numeric:true}):bv.localeCompare(av,undefined,{numeric:true}); });
+  var dc={'良好':'dot-ok','要観察':'dot-watch','治療中':'dot-treat','枯死':'dot-dead'};
+  var bc={'良好':'b-green','要観察':'b-yellow','治療中':'b-red','枯死':'b-gray'};
+  document.getElementById('tree-tbody').innerHTML=trees.map(function(t){
+    return '<tr onclick="selectTreeRow(\''+t.id+'\')" style="cursor:pointer">'
+      +'<td><b style="font-family:var(--mono)">'+t.id+'</b></td>'
+      +'<td style="font-size:.75rem">'+(t.loc||'—')+'</td>'
+      +'<td>'+(t.variety||'—')+'</td>'
+      +'<td><span class="badge b-purple" style="font-size:.62rem">'+(t.type||'—')+'</span></td>'
+      +'<td style="font-family:var(--mono)">'+(t.year||'—')+'</td>'
+      +'<td style="font-family:var(--mono)">'+(t.height?t.height+'cm':'—')+'</td>'
+      +'<td><span class="dot '+(dc[t.status]||'dot-ok')+'"></span> <span class="badge '+(bc[t.status]||'b-green')+'" style="font-size:.62rem">'+t.status+'</span></td>'
+      +'<td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();selectTreeRow(\''+t.id+'\')">詳細</button></td>'
+      +'</tr>';
+  }).join('');
+  document.getElementById('tree-count-label').textContent='表示:'+trees.length+'本 / 合計:'+S.trees.length+'本';
 }
-function selectTreeRow(id){
-  const t=S.trees.find(tr=>tr.id===id);if(!t)return;
+
+function selectTreeRow(id) {
+  var t=S.trees.find(function(tr){return tr.id===id;}); if(!t)return;
   selectedTree=t;
   document.getElementById('tree-detail').style.display='block';
   document.getElementById('tree-detail-title').textContent=t.id+' — '+(t.variety||t.type||'');
-  document.getElementById('tree-detail-body').innerHTML=`
-    <div class="row3" style="font-size:.82rem;margin-bottom:10px">
-      <div><b>区画</b><br>${t.loc||'—'}</div><div><b>系統</b><br>${t.type||'—'}</div><div><b>植付年</b><br>${t.year||'—'}</div>
-      <div><b>樹高</b><br>${t.height?t.height+'cm':'—'}</div><div><b>樹幅</b><br>${t.width?t.width+'cm':'—'}</div><div><b>主幹数</b><br>${t.stems||'—'}</div>
-    </div>
-    ${t.note?`<div style="background:#faf8f4;padding:8px;border-radius:8px;font-size:.78rem;color:#555">${t.note}</div>`:''}
-    ${t.photos&&t.photos.length?`<div class="photo-grid" style="margin-top:8px">${t.photos.map(p=>`<img class="photo-thumb" src="${p}">`).join('')}</div>`:''}`;
+  document.getElementById('tree-detail-body').innerHTML=
+    '<div class="row3" style="font-size:.82rem;margin-bottom:10px">'
+    +'<div><b>区画</b><br>'+(t.loc||'—')+'</div><div><b>系統</b><br>'+(t.type||'—')+'</div><div><b>植付年</b><br>'+(t.year||'—')+'</div>'
+    +'<div><b>樹高</b><br>'+(t.height?t.height+'cm':'—')+'</div><div><b>樹幅</b><br>'+(t.width?t.width+'cm':'—')+'</div><div><b>主幹数</b><br>'+(t.stems||'—')+'</div>'
+    +'</div>'
+    +(t.note?'<div style="background:#faf8f4;padding:8px;border-radius:8px;font-size:.78rem;color:#555">'+t.note+'</div>':'')
+    +(t.photos&&t.photos.length?'<div class="photo-grid" style="margin-top:8px">'+t.photos.map(function(p){return '<img class="photo-thumb" src="'+p+'">';}).join('')+'</div>':'');
   document.getElementById('tree-detail').scrollIntoView({behavior:'smooth',block:'nearest'});
+  renderTreeTable();
 }
 
+// ============================================================
 // PLANS
-function savePlan(){
-  const task=v('pa-task');if(!task)return alert('作業内容を入力してください');
-  S.plans.push({id:Date.now(),month:parseInt(v('pa-month')),cat:v('pa-cat'),task,person:v('pa-person'),manday:v('pa-manday'),note:v('pa-note'),done:false});
-  clr(['pa-task','pa-person','pa-manday','pa-note']);cm('m-plan-add');save();renderAll();
-}
-function togglePlan(id){
-  const p=S.plans.find(p=>p.id===id);if(p)p.done=!p.done;
-  save();renderAnnualPlan();renderHomeTasks();renderStats();
-}
-function renderAnnualPlan(){
-  const now=new Date();const cm_=now.getMonth()+1;
-  document.getElementById('annual-plan').innerHTML=Array.from({length:12},(_,i)=>i+1).map(m=>{
-    const plans=S.plans.filter(p=>p.month===m);
-    const chips=plans.length?plans.map(p=>`<span class="pchip ${p.done?'pchip-done':'pchip-todo'}" onclick="togglePlan(${p.id})">${p.cat.split(' ')[0]} ${p.task}</span>`).join(''):`<span style="color:#ccc;font-size:.7rem">未登録</span>`;
-    return `<div class="plan-row ${m===cm_?'now-month':''}"><div class="plan-mo">${m}月</div><div class="plan-chips">${chips}</div></div>`;
-  }).join('');
-}
-function renderHomeTasks(){
-  const m=new Date().getMonth()+1;
-  const plans=S.plans.filter(p=>p.month===m);
-  const el=document.getElementById('home-tasks');
-  if(!plans.length){el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:12px">今月の作業計画を追加しましょう</div>';return}
-  el.innerHTML=`<div class="plan-chips" style="gap:5px">${plans.map(p=>`<span class="pchip ${p.done?'pchip-done':'pchip-todo'}" onclick="togglePlan(${p.id})">${p.cat.split(' ')[0]} ${p.task}</span>`).join('')}</div>`;
+// ============================================================
+function savePlan() {
+  var task=val('pa-task'); if(!task){alert('作業内容を入力してください');return;}
+  var obj={id:Date.now(),month:parseInt(val('pa-month')),cat:val('pa-cat'),task:task,
+           person:val('pa-person'),manday:val('pa-manday'),done:false};
+  S.plans.push(obj);
+  clrFields(['pa-task','pa-person','pa-manday']); closeModal('m-plan-add');
+  renderAll(); pushItem('plans',obj);
 }
 
+function togglePlan(id) {
+  var p=S.plans.find(function(x){return x.id===id;}); if(!p)return;
+  p.done=!p.done; renderAnnualPlan(); renderHomeTasks(); renderStats(); pushItem('plans',p);
+}
+
+function togglePlanSelMode() {
+  planSelMode=!planSelMode; planSel.clear();
+  document.getElementById('plan-sel-bar').style.display=planSelMode?'flex':'none';
+  selToggleBtn('plan-sel-toggle',planSelMode); renderAnnualPlan();
+}
+function planSelCancel() { planSelMode=false; planSel.clear(); document.getElementById('plan-sel-bar').style.display='none'; selToggleBtn('plan-sel-toggle',false); renderAnnualPlan(); }
+function planSelAll() { S.plans.forEach(function(p){planSel.add(p.id);}); document.getElementById('plan-sel-count').textContent=planSel.size+'件選択中'; renderAnnualPlan(); }
+function deleteSelPlans() {
+  if(!planSel.size){alert('削除する計画を選択してください');return;}
+  if(!confirm(planSel.size+'件の計画を削除しますか？'))return;
+  var ids=[...planSel];
+  S.plans=S.plans.filter(function(p){return!planSel.has(p.id);}); planSel.clear();
+  document.getElementById('plan-sel-bar').style.display='none'; selToggleBtn('plan-sel-toggle',false); planSelMode=false;
+  renderAll(); removeItems('plans',ids);
+}
+
+function renderAnnualPlan() {
+  var now=new Date(); var cm=now.getMonth()+1;
+  document.getElementById('annual-plan').innerHTML=Array.from({length:12},function(_,i){return i+1;}).map(function(m){
+    var plans=S.plans.filter(function(p){return p.month===m;});
+    var chips=plans.length?plans.map(function(p){
+      if(planSelMode){
+        var chk=planSel.has(p.id);
+        return '<span class="pchip" style="background:'+(chk?'var(--rose-mid)':'var(--cream)')
+          +';color:'+(chk?'white':'var(--ink)')+';border:1.5px solid '+(chk?'var(--rose-mid)':'var(--line)')+'" onclick="togglePlanSel('+p.id+')">'
+          +(chk?'✓ ':'')+p.cat.split(' ')[0]+' '+p.task+'</span>';
+      }
+      return '<span class="pchip '+(p.done?'pchip-done':'pchip-todo')+'" onclick="togglePlan('+p.id+')">'+p.cat.split(' ')[0]+' '+p.task+'</span>';
+    }).join(''):'<span style="color:#ccc;font-size:.7rem">未登録</span>';
+    return '<div class="plan-row'+(m===cm?' now-month':'')+'"><div class="plan-mo">'+m+'月</div><div class="plan-chips">'+chips+'</div></div>';
+  }).join('');
+}
+
+function togglePlanSel(id) {
+  if(planSel.has(id))planSel.delete(id);else planSel.add(id);
+  document.getElementById('plan-sel-count').textContent=planSel.size+'件選択中'; renderAnnualPlan();
+}
+
+function renderHomeTasks() {
+  var m=new Date().getMonth()+1;
+  var plans=S.plans.filter(function(p){return p.month===m;});
+  var el=document.getElementById('home-tasks');
+  if(!plans.length){el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:12px">今月の作業計画を追加しましょう</div>';return;}
+  el.innerHTML='<div class="plan-chips" style="gap:5px">'+plans.map(function(p){
+    return '<span class="pchip '+(p.done?'pchip-done':'pchip-todo')+'" onclick="togglePlan('+p.id+')">'+p.cat.split(' ')[0]+' '+p.task+'</span>';
+  }).join('')+'</div>';
+}
+
+// ============================================================
 // RECORDS
-async function saveRec(){
-  const date=v('ra-date');if(!date)return alert('作業日を選択してください');
-  const photos=await getB64('ra-photos');
-  S.records.unshift({id:Date.now(),date,weather:v('ra-weather'),type:v('ra-type'),area:v('ra-area'),worker:v('ra-worker'),hours:v('ra-hours'),detail:v('ra-detail'),yield_:v('ra-yield'),photos});
-  clr(['ra-area','ra-worker','ra-hours','ra-detail','ra-yield']);
-  document.getElementById('ra-photos').value='';document.getElementById('ra-pgrid').innerHTML='';
-  cm('m-rec-add');save();renderAll();
-}
-function recFilter(val,el){
-  recFilterVal=val;
-  el.closest('.filter-row').querySelectorAll('.fchip').forEach(c=>c.classList.remove('on'));
-  el.classList.add('on');renderRecs();
-}
-const TICO={剪定:'✂️',施肥:'🧪',収穫:'🫐',防除:'🛡️',土壌管理:'🌱',灌水:'💧',除草:'🌿'};
-function renderRecs(){
-  const q=(v('rec-search')||'').toLowerCase();
-  let recs=[...S.records];
-  if(recFilterVal!=='all')recs=recs.filter(r=>r.type===recFilterVal);
-  if(q)recs=recs.filter(r=>(r.detail+r.worker+r.area).toLowerCase().includes(q));
-  const el=document.getElementById('recs-list');
-  if(!recs.length){el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:16px">記録がありません</div>';return}
-  el.innerHTML=recs.map(r=>`<div class="ri">
-    <div class="ri-ico">${TICO[r.type]||'📌'}</div>
-    <div class="ri-body">
-      <div class="ri-date">${r.date} ${r.weather||''}</div>
-      <div class="ri-title">${r.type}${r.worker?' / '+r.worker:''}</div>
-      ${r.area?`<div class="ri-meta">区画: ${r.area}</div>`:''}
-      ${r.detail?`<div class="ri-meta">${r.detail.substring(0,60)}${r.detail.length>60?'...':''}</div>`:''}
-      ${r.yield_?`<div class="ri-meta">収量: ${r.yield_}</div>`:''}
-      ${r.photos&&r.photos.length?`<div class="photo-grid" style="margin-top:6px">${r.photos.map(p=>`<img class="photo-thumb" src="${p}">`).join('')}</div>`:''}
-    </div>
-    <div class="ri-side">${r.hours?`<span class="badge b-blue">${r.hours}h</span>`:''}</div>
-  </div>`).join('');
-}
-function renderHomeRecs(){
-  const el=document.getElementById('home-recs');
-  const recs=S.records.slice(0,5);
-  if(!recs.length){el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:12px">作業記録がありません</div>';return}
-  el.innerHTML=recs.map(r=>`<div class="ri" style="padding:8px">
-    <div class="ri-ico" style="font-size:1rem">${TICO[r.type]||'📌'}</div>
-    <div class="ri-body">
-      <div class="ri-date">${r.date}</div>
-      <div class="ri-title" style="font-size:.82rem">${r.type}${r.worker?' / '+r.worker:''}</div>
-      ${r.area?`<div class="ri-meta">区画: ${r.area}</div>`:''}
-    </div>
-  </div>`).join('');
+// ============================================================
+var TICO={剪定:'✂️',施肥:'🧪',収穫:'🫐',防除:'🛡️',土壌管理:'🌱',灌水:'💧',除草:'🌿'};
+
+function saveRec() {
+  var date=val('ra-date'); if(!date){alert('作業日を選択してください');return;}
+  getPhotos('ra-photos', function(photos) {
+    var obj={id:Date.now(),date:date,weather:val('ra-weather'),type:val('ra-type'),area:val('ra-area'),
+             worker:val('ra-worker'),hours:val('ra-hours'),detail:val('ra-detail'),yield_:val('ra-yield'),photos:photos};
+    S.records.unshift(obj);
+    clrFields(['ra-area','ra-worker','ra-hours','ra-detail','ra-yield']);
+    document.getElementById('ra-photos').value=''; document.getElementById('ra-pgrid').innerHTML='';
+    closeModal('m-rec-add'); renderAll(); pushItem('records',obj);
+  });
 }
 
-// FERTILIZERS
-async function saveFert(){
-  const date=v('fa-date');if(!date)return alert('施肥日を選択してください');
-  const photos=await getB64('fa-photos');
-  S.fertilizers.unshift({id:Date.now(),date,kind:v('fa-kind'),name:v('fa-name'),amount:v('fa-amount'),total:v('fa-total'),npk:v('fa-npk'),method:v('fa-method'),area:v('fa-area'),phPre:v('fa-ph-pre'),phPost:v('fa-ph-post'),note:v('fa-note'),photos});
-  clr(['fa-name','fa-amount','fa-total','fa-npk','fa-area','fa-ph-pre','fa-ph-post','fa-note']);
-  cm('m-fert-add');save();renderFerts();renderStats();
+function recFilter(val2, el) {
+  recFilterVal=val2; el.closest('.filter-row').querySelectorAll('.fchip').forEach(function(c){c.classList.remove('on');}); el.classList.add('on'); renderRecs();
 }
-function saveFertPlan(){
-  S.fertPlans.push({id:Date.now(),month:parseInt(v('fp-month')),kind:v('fp-kind'),name:v('fp-name'),amount:v('fp-amount'),ph:v('fp-ph'),note:v('fp-note')});
-  clr(['fp-name','fp-amount','fp-ph','fp-note']);cm('m-fert-plan-add');save();renderFerts();
+function toggleRecSelMode() {
+  recSelMode=!recSelMode; recSel.clear();
+  document.getElementById('rec-sel-bar').style.display=recSelMode?'flex':'none';
+  selToggleBtn('rec-sel-toggle',recSelMode); renderRecs();
 }
-function renderFerts(){
-  const el=document.getElementById('fert-list');
-  if(!S.fertilizers.length){el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:16px">施肥記録がありません</div>';return}
-  el.innerHTML=S.fertilizers.map(f=>`<div class="ri">
-    <div class="ri-ico">🧪</div>
-    <div class="ri-body">
-      <div class="ri-date">${f.date}</div>
-      <div class="ri-title">${f.name||'—'} <span class="badge b-purple" style="font-size:.62rem">${f.kind}</span></div>
-      <div class="ri-meta">${f.amount?f.amount+'g/株 ':''}${f.method||''}${f.area?' / '+f.area:''}${f.npk?' NPK:'+f.npk:''}</div>
-      ${(f.phPre||f.phPost)?`<div class="ri-meta">pH: ${f.phPre||'—'} → ${f.phPost||'—'}</div>`:''}
-      ${f.note?`<div class="ri-meta">${f.note.substring(0,50)}</div>`:''}
-    </div>
-    <div class="ri-side">${f.total?`<span class="badge b-green">${f.total}kg</span>`:''}</div>
-  </div>`).join('');
-  const pel=document.getElementById('fert-plan-list');
-  if(!S.fertPlans.length){pel.innerHTML='<div style="color:#aaa;font-size:.75rem">施肥計画なし</div>';return}
-  pel.innerHTML=Array.from({length:12},(_,i)=>i+1).map(m=>{
-    const fps=S.fertPlans.filter(f=>f.month===m);if(!fps.length)return '';
-    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)">
-      <span style="min-width:30px;font-weight:700;font-size:.75rem;color:var(--berry);font-family:var(--mono)">${m}月</span>
-      <div>${fps.map(f=>`<div style="font-size:.78rem">${f.kind} <b>${f.name||'—'}</b> ${f.amount?f.amount+'g/株':''} ${f.ph?'目標pH:'+f.ph:''}</div>`).join('')}</div>
-    </div>`;
+function recSelCancel() { recSelMode=false; recSel.clear(); document.getElementById('rec-sel-bar').style.display='none'; selToggleBtn('rec-sel-toggle',false); renderRecs(); }
+function recSelAll() {
+  S.records.filter(function(r){return recFilterVal==='all'||r.type===recFilterVal;}).forEach(function(r){recSel.add(r.id);});
+  document.getElementById('rec-sel-count').textContent=recSel.size+'件選択中'; renderRecs();
+}
+function toggleRecSel(id) {
+  if(recSel.has(id))recSel.delete(id);else recSel.add(id);
+  document.getElementById('rec-sel-count').textContent=recSel.size+'件選択中'; renderRecs();
+}
+function deleteSelRecs() {
+  if(!recSel.size){alert('削除する記録を選択してください');return;}
+  if(!confirm(recSel.size+'件の記録を削除しますか？'))return;
+  var ids=[...recSel];
+  S.records=S.records.filter(function(r){return!recSel.has(r.id);}); recSel.clear();
+  document.getElementById('rec-sel-bar').style.display='none'; selToggleBtn('rec-sel-toggle',false); recSelMode=false;
+  renderAll(); removeItems('records',ids);
+}
+
+function renderRecs() {
+  var q=(val('rec-search')||'').toLowerCase();
+  var recs=S.records.filter(function(r){return (recFilterVal==='all'||r.type===recFilterVal)&&(!q||(r.detail+r.worker+r.area).toLowerCase().includes(q));});
+  var el=document.getElementById('recs-list');
+  if(!recs.length){el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:16px">記録がありません</div>';return;}
+  el.innerHTML=recs.map(function(r){
+    var chk=recSel.has(r.id);
+    var selSt=chk?'background:#fff0f0;border-color:var(--rose-mid);':'';
+    return '<div class="ri" style="cursor:'+(recSelMode?'pointer':'')+';'+selSt+'" onclick="'+(recSelMode?'toggleRecSel('+r.id+')':'')+'">'
+      +(recSelMode?chkBox(chk):'')
+      +'<div class="ri-ico">'+(TICO[r.type]||'📌')+'</div>'
+      +'<div class="ri-body">'
+        +'<div class="ri-date">'+r.date+' '+(r.weather||'')+'</div>'
+        +'<div class="ri-title">'+r.type+(r.worker?' / '+r.worker:'')+'</div>'
+        +(r.area?'<div class="ri-meta">区画: '+r.area+'</div>':'')
+        +(r.detail?'<div class="ri-meta">'+r.detail.substring(0,60)+(r.detail.length>60?'...':'')+'</div>':'')
+        +(r.yield_?'<div class="ri-meta">収量: '+r.yield_+'</div>':'')
+        +(r.photos&&r.photos.length?'<div class="photo-grid" style="margin-top:6px">'+r.photos.map(function(p){return '<img class="photo-thumb" src="'+p+'">';}).join('')+'</div>':'')
+      +'</div>'
+      +'<div class="ri-side">'+(r.hours?'<span class="badge b-blue">'+r.hours+'h</span>':'')+'</div>'
+      +'</div>';
   }).join('');
 }
 
-// PESTS
-async function savePest(){
-  const date=v('pea-date');if(!date)return alert('発生日を選択してください');
-  const photos=await getB64('pea-photos');
-  S.pests.unshift({id:Date.now(),date,type:v('pea-type'),name:v('pea-name'),area:v('pea-area'),scale:v('pea-scale'),action:v('pea-action'),status:v('pea-status'),next:v('pea-next'),photos});
-  clr(['pea-name','pea-area','pea-action','pea-next']);
-  document.getElementById('pea-photos').value='';document.getElementById('pea-pgrid').innerHTML='';
-  cm('m-pest-add');save();renderPests();renderStats();
-}
-function pestFilter(val,el){
-  pestFilterVal=val;
-  el.closest('.filter-row').querySelectorAll('.fchip').forEach(c=>c.classList.remove('on'));
-  el.classList.add('on');renderPests();
-}
-function renderPests(){
-  let pests=[...S.pests];
-  if(pestFilterVal!=='all')pests=pests.filter(p=>p.status===pestFilterVal);
-  const el=document.getElementById('pest-list');
-  if(!pests.length){el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:16px">記録がありません</div>';return}
-  const sc={'対応中':'b-red','経過観察':'b-yellow','解決':'b-green'};
-  el.innerHTML=pests.map(p=>`<div class="ri">
-    <div class="ri-ico">${p.type==='病害'?'🍂':p.type==='害虫'?'🐛':'⚠️'}</div>
-    <div class="ri-body">
-      <div class="ri-date">${p.date} | ${p.type}</div>
-      <div class="ri-title">${p.name||'—'}</div>
-      <div class="ri-meta">${p.area?'区画:'+p.area+' / ':''}規模:${p.scale}</div>
-      ${p.action?`<div class="ri-meta">対応: ${p.action.substring(0,50)}</div>`:''}
-      ${p.next?`<div class="ri-meta">📌 次回確認: ${p.next}</div>`:''}
-      ${p.photos&&p.photos.length?`<div class="photo-grid" style="margin-top:6px">${p.photos.map(ph=>`<img class="photo-thumb" src="${ph}">`).join('')}</div>`:''}
-    </div>
-    <span class="badge ${sc[p.status]||'b-gray'}">${p.status}</span>
-  </div>`).join('');
+function renderHomeRecs() {
+  var el=document.getElementById('home-recs');
+  var recs=S.records.slice(0,5);
+  if(!recs.length){el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:12px">作業記録がありません</div>';return;}
+  el.innerHTML=recs.map(function(r){
+    return '<div class="ri" style="padding:8px"><div class="ri-ico" style="font-size:1rem">'+(TICO[r.type]||'📌')+'</div><div class="ri-body"><div class="ri-date">'+r.date+'</div><div class="ri-title" style="font-size:.82rem">'+r.type+(r.worker?' / '+r.worker:'')+'</div>'+(r.area?'<div class="ri-meta">区画: '+r.area+'</div>':'')+'</div></div>';
+  }).join('');
 }
 
-// STATS
-function renderStats(){
-  const now=new Date();const m=now.getMonth()+1;const y=now.getFullYear();
+// ============================================================
+// FERTILIZERS
+// ============================================================
+function saveFert() {
+  var date=val('fa-date'); if(!date){alert('施肥日を選択してください');return;}
+  var obj={id:Date.now(),date:date,kind:val('fa-kind'),name:val('fa-name'),amount:val('fa-amount'),
+           total:val('fa-total'),npk:val('fa-npk'),method:val('fa-method'),area:val('fa-area'),
+           phPre:val('fa-ph-pre'),phPost:val('fa-ph-post'),note:val('fa-note'),photos:[]};
+  S.fertilizers.unshift(obj);
+  clrFields(['fa-name','fa-amount','fa-total','fa-npk','fa-area','fa-ph-pre','fa-ph-post','fa-note']);
+  closeModal('m-fert-add'); renderFerts(); renderStats(); pushItem('fertilizers',obj);
+}
+
+function saveFertPlan() {
+  var obj={id:Date.now(),month:parseInt(val('fp-month')),kind:val('fp-kind'),name:val('fp-name'),amount:val('fp-amount'),ph:val('fp-ph')};
+  S.fertPlans.push(obj); clrFields(['fp-name','fp-amount','fp-ph']); closeModal('m-fert-plan-add');
+  try{localStorage.setItem('blg_fertPlans',JSON.stringify(S.fertPlans));}catch(e){}
+  renderFerts();
+}
+
+function toggleFertSelMode() {
+  fertSelMode=!fertSelMode; fertSel.clear();
+  document.getElementById('fert-sel-bar').style.display=fertSelMode?'flex':'none';
+  selToggleBtn('fert-sel-toggle',fertSelMode); renderFerts();
+}
+function fertSelCancel() { fertSelMode=false; fertSel.clear(); document.getElementById('fert-sel-bar').style.display='none'; selToggleBtn('fert-sel-toggle',false); renderFerts(); }
+function fertSelAll() { S.fertilizers.forEach(function(f){fertSel.add(f.id);}); document.getElementById('fert-sel-count').textContent=fertSel.size+'件選択中'; renderFerts(); }
+function toggleFertSel(id) { if(fertSel.has(id))fertSel.delete(id);else fertSel.add(id); document.getElementById('fert-sel-count').textContent=fertSel.size+'件選択中'; renderFerts(); }
+function deleteSelFerts() {
+  if(!fertSel.size){alert('削除する記録を選択してください');return;}
+  if(!confirm(fertSel.size+'件の施肥記録を削除しますか？'))return;
+  var ids=[...fertSel];
+  S.fertilizers=S.fertilizers.filter(function(f){return!fertSel.has(f.id);}); fertSel.clear();
+  document.getElementById('fert-sel-bar').style.display='none'; selToggleBtn('fert-sel-toggle',false); fertSelMode=false;
+  renderFerts(); renderStats(); removeItems('fertilizers',ids);
+}
+
+function renderFerts() {
+  var el=document.getElementById('fert-list');
+  if(!S.fertilizers.length){el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:16px">施肥記録がありません</div>';return;}
+  el.innerHTML=S.fertilizers.map(function(f){
+    var chk=fertSel.has(f.id); var selSt=chk?'background:#fff0f0;border-color:var(--rose-mid);':'';
+    return '<div class="ri" style="cursor:'+(fertSelMode?'pointer':'')+';'+selSt+'" onclick="'+(fertSelMode?'toggleFertSel('+f.id+')':'')+'">'
+      +(fertSelMode?chkBox(chk):'')
+      +'<div class="ri-ico">🧪</div>'
+      +'<div class="ri-body"><div class="ri-date">'+f.date+'</div>'
+      +'<div class="ri-title">'+(f.name||'—')+' <span class="badge b-purple" style="font-size:.62rem">'+f.kind+'</span></div>'
+      +'<div class="ri-meta">'+(f.amount?f.amount+'g/株 ':'')+f.method+(f.area?' / '+f.area:'')+(f.npk?' NPK:'+f.npk:'')+'</div>'
+      +((f.phPre||f.phPost)?'<div class="ri-meta">pH: '+(f.phPre||'—')+' → '+(f.phPost||'—')+'</div>':'')
+      +(f.note?'<div class="ri-meta">'+f.note.substring(0,50)+'</div>':'')
+      +'</div><div class="ri-side">'+(f.total?'<span class="badge b-green">'+f.total+'kg</span>':'')+'</div></div>';
+  }).join('');
+  var pel=document.getElementById('fert-plan-list');
+  if(!S.fertPlans.length){pel.innerHTML='<div style="color:#aaa;font-size:.75rem">施肥計画なし</div>';return;}
+  pel.innerHTML=Array.from({length:12},function(_,i){return i+1;}).map(function(m){
+    var fps=S.fertPlans.filter(function(f){return f.month===m;}); if(!fps.length)return '';
+    return '<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)">'
+      +'<span style="min-width:30px;font-weight:700;font-size:.75rem;color:var(--berry);font-family:var(--mono)">'+m+'月</span>'
+      +'<div>'+fps.map(function(f){return '<div style="font-size:.78rem">'+f.kind+' <b>'+(f.name||'—')+'</b> '+(f.amount?f.amount+'g/株':'')+' '+(f.ph?'目標pH:'+f.ph:'')+'</div>';}).join('')+'</div></div>';
+  }).join('');
+}
+
+// ============================================================
+// PESTS
+// ============================================================
+function savePest() {
+  var date=val('pea-date'); if(!date){alert('発生日を選択してください');return;}
+  getPhotos('pea-photos', function(photos) {
+    var obj={id:Date.now(),date:date,type:val('pea-type'),name:val('pea-name'),area:val('pea-area'),
+             scale:val('pea-scale'),action:val('pea-action'),status:val('pea-status'),next:val('pea-next'),photos:photos};
+    S.pests.unshift(obj);
+    clrFields(['pea-name','pea-area','pea-action','pea-next']);
+    document.getElementById('pea-photos').value=''; document.getElementById('pea-pgrid').innerHTML='';
+    closeModal('m-pest-add'); renderPests(); renderStats(); pushItem('pests',obj);
+  });
+}
+
+function pestFilter(val2, el) {
+  pestFilterVal=val2; el.closest('.filter-row').querySelectorAll('.fchip').forEach(function(c){c.classList.remove('on');}); el.classList.add('on'); renderPests();
+}
+function togglePestSelMode() {
+  pestSelMode=!pestSelMode; pestSel.clear();
+  document.getElementById('pest-sel-bar').style.display=pestSelMode?'flex':'none';
+  selToggleBtn('pest-sel-toggle',pestSelMode); renderPests();
+}
+function pestSelCancel() { pestSelMode=false; pestSel.clear(); document.getElementById('pest-sel-bar').style.display='none'; selToggleBtn('pest-sel-toggle',false); renderPests(); }
+function pestSelAll() {
+  S.pests.filter(function(p){return pestFilterVal==='all'||p.status===pestFilterVal;}).forEach(function(p){pestSel.add(p.id);});
+  document.getElementById('pest-sel-count').textContent=pestSel.size+'件選択中'; renderPests();
+}
+function togglePestSel(id) { if(pestSel.has(id))pestSel.delete(id);else pestSel.add(id); document.getElementById('pest-sel-count').textContent=pestSel.size+'件選択中'; renderPests(); }
+function deleteSelPests() {
+  if(!pestSel.size){alert('削除する記録を選択してください');return;}
+  if(!confirm(pestSel.size+'件の病害虫記録を削除しますか？'))return;
+  var ids=[...pestSel];
+  S.pests=S.pests.filter(function(p){return!pestSel.has(p.id);}); pestSel.clear();
+  document.getElementById('pest-sel-bar').style.display='none'; selToggleBtn('pest-sel-toggle',false); pestSelMode=false;
+  renderPests(); renderStats(); removeItems('pests',ids);
+}
+
+function renderPests() {
+  var pests=S.pests.filter(function(p){return pestFilterVal==='all'||p.status===pestFilterVal;});
+  var el=document.getElementById('pest-list');
+  if(!pests.length){el.innerHTML='<div style="color:#aaa;font-size:.8rem;text-align:center;padding:16px">記録がありません</div>';return;}
+  var sc={'対応中':'b-red','経過観察':'b-yellow','解決':'b-green'};
+  el.innerHTML=pests.map(function(p){
+    var chk=pestSel.has(p.id); var selSt=chk?'background:#fff0f0;border-color:var(--rose-mid);':'';
+    return '<div class="ri" style="cursor:'+(pestSelMode?'pointer':'')+';'+selSt+'" onclick="'+(pestSelMode?'togglePestSel('+p.id+')':'')+'">'
+      +(pestSelMode?chkBox(chk):'')
+      +'<div class="ri-ico">'+(p.type==='病害'?'🍂':p.type==='害虫'?'🐛':'⚠️')+'</div>'
+      +'<div class="ri-body"><div class="ri-date">'+p.date+' | '+p.type+'</div>'
+      +'<div class="ri-title">'+(p.name||'—')+'</div>'
+      +'<div class="ri-meta">'+(p.area?'区画:'+p.area+' / ':'')+'規模:'+p.scale+'</div>'
+      +(p.action?'<div class="ri-meta">対応: '+p.action.substring(0,50)+'</div>':'')
+      +(p.next?'<div class="ri-meta">📌 次回確認: '+p.next+'</div>':'')
+      +(p.photos&&p.photos.length?'<div class="photo-grid" style="margin-top:6px">'+p.photos.map(function(ph){return '<img class="photo-thumb" src="'+ph+'">';}).join('')+'</div>':'')
+      +'</div><span class="badge '+(sc[p.status]||'b-gray')+'">'+p.status+'</span></div>';
+  }).join('');
+}
+
+// ============================================================
+// STATS & RENDER ALL
+// ============================================================
+function renderStats() {
+  var now=new Date(); var m=now.getMonth()+1; var y=now.getFullYear();
   document.getElementById('st-trees').textContent=S.trees.length;
   document.getElementById('hdr-count').textContent=S.trees.length+'本';
-  document.getElementById('st-recs').textContent=S.records.filter(r=>{const d=new Date(r.date);return d.getMonth()+1===m&&d.getFullYear()===y}).length;
+  document.getElementById('st-recs').textContent=S.records.filter(function(r){var d=new Date(r.date);return d.getMonth()+1===m&&d.getFullYear()===y;}).length;
   document.getElementById('st-ferts').textContent=S.fertilizers.length;
-  document.getElementById('st-pests').textContent=S.pests.filter(p=>p.status==='対応中').length;
+  document.getElementById('st-pests').textContent=S.pests.filter(function(p){return p.status==='対応中';}).length;
 }
 
+function renderAll() {
+  renderStats(); renderTreeTable(); renderAnnualPlan(); renderHomeTasks();
+  renderRecs(); renderHomeRecs(); renderFerts(); renderPests();
+}
+
+// ============================================================
 // EXPORT
-function exportCSV(type){
-  let csv='',filename='';
+// ============================================================
+function exportCSV(type) {
+  var csv='', filename='';
   if(type==='trees'){
     csv='ID,区画,品種,系統,植付年,樹高(cm),樹幅(cm),主幹数,状態,備考\n';
-    S.trees.forEach(t=>csv+=`"${t.id}","${t.loc||''}","${t.variety||''}","${t.type||''}","${t.year||''}","${t.height||''}","${t.width||''}","${t.stems||''}","${t.status||''}","${(t.note||'').replace(/"/g,'""')}"\n`);
+    S.trees.forEach(function(t){csv+='"'+t.id+'","'+(t.loc||'')+'","'+(t.variety||'')+'","'+(t.type||'')+'","'+(t.year||'')+'","'+(t.height||'')+'","'+(t.width||'')+'","'+(t.stems||'')+'","'+(t.status||'')+'","'+(t.note||'').replace(/"/g,'""')+'"\n';});
     filename='trees.csv';
-  }else if(type==='plans'){
+  } else if(type==='plans'){
     csv='月,カテゴリ,作業内容,担当,工数(人日),完了\n';
-    S.plans.forEach(p=>csv+=`"${p.month}","${p.cat||''}","${p.task||''}","${p.person||''}","${p.manday||''}","${p.done?'完了':'未完'}"\n`);
+    S.plans.forEach(function(p){csv+='"'+p.month+'","'+(p.cat||'')+'","'+(p.task||'')+'","'+(p.person||'')+'","'+(p.manday||'')+'","'+(p.done?'完了':'未完')+'"\n';});
     filename='work_plan.csv';
-  }else if(type==='records'){
+  } else if(type==='records'){
     csv='作業日,種別,区画,作業者,時間(h),収量,天気,詳細\n';
-    S.records.forEach(r=>csv+=`"${r.date}","${r.type||''}","${r.area||''}","${r.worker||''}","${r.hours||''}","${r.yield_||''}","${r.weather||''}","${(r.detail||'').replace(/"/g,'""')}"\n`);
+    S.records.forEach(function(r){csv+='"'+r.date+'","'+(r.type||'')+'","'+(r.area||'')+'","'+(r.worker||'')+'","'+(r.hours||'')+'","'+(r.yield_||'')+'","'+(r.weather||'')+'","'+(r.detail||'').replace(/"/g,'""')+'"\n';});
     filename='work_records.csv';
-  }else if(type==='fertilizers'){
+  } else if(type==='fertilizers'){
     csv='施肥日,種別,肥料名,量(g/株),総量(kg),N-P-K,方法,区画,pH前,pH後,備考\n';
-    S.fertilizers.forEach(f=>csv+=`"${f.date}","${f.kind||''}","${f.name||''}","${f.amount||''}","${f.total||''}","${f.npk||''}","${f.method||''}","${f.area||''}","${f.phPre||''}","${f.phPost||''}","${(f.note||'').replace(/"/g,'""')}"\n`);
+    S.fertilizers.forEach(function(f){csv+='"'+f.date+'","'+(f.kind||'')+'","'+(f.name||'')+'","'+(f.amount||'')+'","'+(f.total||'')+'","'+(f.npk||'')+'","'+(f.method||'')+'","'+(f.area||'')+'","'+(f.phPre||'')+'","'+(f.phPost||'')+'","'+(f.note||'').replace(/"/g,'""')+'"\n';});
     filename='fertilizer.csv';
-  }else if(type==='pests'){
+  } else if(type==='pests'){
     csv='発生日,種類,名称,区画,規模,対応措置,状況,次回確認\n';
-    S.pests.forEach(p=>csv+=`"${p.date}","${p.type||''}","${p.name||''}","${p.area||''}","${p.scale||''}","${(p.action||'').replace(/"/g,'""')}","${p.status||''}","${p.next||''}"\n`);
+    S.pests.forEach(function(p){csv+='"'+p.date+'","'+(p.type||'')+'","'+(p.name||'')+'","'+(p.area||'')+'","'+(p.scale||'')+'","'+(p.action||'').replace(/"/g,'""')+'","'+(p.status||'')+'","'+(p.next||'')+'"\n';});
     filename='pest.csv';
   }
   document.getElementById('csv-preview').textContent=csv.substring(0,800)+(csv.length>800?'\n...(省略)':'');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download=filename;a.click();
-  URL.revokeObjectURL(url);
-}
-function exportAllJSON(){
-  const json=JSON.stringify(S,null,2);
-  document.getElementById('csv-preview').textContent=json.substring(0,800)+(json.length>800?'\n...':'');
-  const blob=new Blob([json],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='farm_data.json';a.click();
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url; a.download=filename; a.click();
   URL.revokeObjectURL(url);
 }
 
-// SAMPLE DATA
-function addSample(){
-  if(S.trees.length>0||S.plans.length>0)return;
+function exportAllJSON() {
+  var json=JSON.stringify(S,null,2);
+  document.getElementById('csv-preview').textContent=json.substring(0,800)+(json.length>800?'\n...':'');
+  var blob=new Blob([json],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url; a.download='farm_data.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// SAMPLE DATA & INIT
+// ============================================================
+function addSample() {
+  if (S.trees.length>0||S.plans.length>0) return;
   S.plans=[
     {id:1,month:1,cat:'✂️ 剪定',task:'休眠期剪定',person:'全員',manday:10,done:false},
     {id:2,month:2,cat:'🧪 施肥',task:'堆肥・基肥施用',person:'田中',manday:5,done:false},
-    {id:3,month:3,cat:'🧪 施肥',task:'萌芽前追肥（硫安）',person:'田中',manday:3,done:true},
-    {id:4,month:4,cat:'📌 その他',task:'開花期授粉補助',person:'全員',manday:4,done:false},
+    {id:3,month:3,cat:'🧪 施肥',task:'萌芽前追肥',person:'田中',manday:3,done:true},
+    {id:4,month:4,cat:'📌 その他',task:'開花期管理',person:'全員',manday:4,done:false},
     {id:5,month:5,cat:'✂️ 剪定',task:'摘果・新梢整理',person:'全員',manday:8,done:false},
-    {id:6,month:6,cat:'🫐 収穫',task:'収穫開始（早生品種）',person:'全員',manday:15,done:false},
-    {id:7,month:7,cat:'🫐 収穫',task:'本格収穫（主力品種）',person:'全員',manday:20,done:false},
-    {id:8,month:8,cat:'✂️ 剪定',task:'夏季剪定・整枝',person:'全員',manday:6,done:false},
+    {id:6,month:6,cat:'🫐 収穫',task:'収穫開始',person:'全員',manday:15,done:false},
+    {id:7,month:7,cat:'🫐 収穫',task:'本格収穫',person:'全員',manday:20,done:false},
+    {id:8,month:8,cat:'✂️ 剪定',task:'夏季剪定',person:'全員',manday:6,done:false},
     {id:9,month:9,cat:'🧪 施肥',task:'礼肥施用',person:'田中',manday:3,done:false},
-    {id:10,month:10,cat:'🌱 土壌管理',task:'pH測定・硫黄粉末施用',person:'田中',manday:4,done:false},
+    {id:10,month:10,cat:'🌱 土壌管理',task:'pH測定・硫黄施用',person:'田中',manday:4,done:false},
     {id:11,month:11,cat:'📌 その他',task:'落葉確認・片付け',person:'全員',manday:5,done:false},
-    {id:12,month:12,cat:'📌 その他',task:'越冬準備・防寒対策',person:'全員',manday:5,done:false},
+    {id:12,month:12,cat:'📌 その他',task:'越冬準備',person:'全員',manday:5,done:false},
   ];
   S.fertPlans=[
     {id:1,month:2,kind:'基肥',name:'IB化成 S604',amount:80,ph:4.5},
@@ -847,20 +1163,15 @@ function addSample(){
     {id:3,month:9,kind:'礼肥',name:'有機配合肥料',amount:60,ph:4.5},
     {id:4,month:10,kind:'土壌改良',name:'硫黄粉末',amount:20,ph:4.0},
   ];
-  save();
+  try{localStorage.setItem('blg_fertPlans',JSON.stringify(S.fertPlans));}catch(e){}
 }
 
-function renderAll(){
-  renderStats();renderTreeTable();renderAnnualPlan();renderHomeTasks();
-  renderRecs();renderHomeRecs();renderFerts();renderPests();
-}
-
-load();addSample();
-const today=new Date().toISOString().split('T')[0];
-['ra-date','fa-date','pea-date'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=today});
+// 起動
+var today=new Date().toISOString().split('T')[0];
+['ra-date','fa-date','pea-date'].forEach(function(id){var e=document.getElementById(id);if(e)e.value=today;});
 document.getElementById('pa-month').value=new Date().getMonth()+1;
 document.getElementById('fp-month').value=new Date().getMonth()+1;
-renderAll();
+loadAll();
 </script>
 </body>
 </html>
