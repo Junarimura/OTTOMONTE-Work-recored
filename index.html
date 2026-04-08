@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>BlueLog Pro</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -17,7 +20,7 @@
   --font:'Noto Sans JP',sans-serif;--mono:'DM Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height:100vh;overflow-x:hidden}
+html{overflow-x:hidden;max-width:100vw}body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height:100vh;overflow-x:hidden;max-width:100vw;width:100%}
 .hdr{background:var(--berry);color:white;padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
 .hdr-brand{display:flex;align-items:center;gap:10px}
 .hdr-logo{font-size:1.5rem}
@@ -31,7 +34,7 @@ body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height
 .bnav-btn .ico{font-size:1.2rem}
 .main{padding:14px 12px 90px;max-width:680px;margin:0 auto}
 .sec{display:none}.sec.on{display:block}
-.card{background:white;border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-bottom:12px;border:1px solid var(--line)}
+.card{background:white;border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-bottom:12px;border:1px solid var(--line);overflow:hidden;box-sizing:border-box;max-width:100%}
 .card-hd{display:flex;align-items:center;gap:8px;margin-bottom:14px}
 .card-ico{font-size:1.25rem}
 .card-title{font-size:.95rem;font-weight:700;color:var(--berry)}
@@ -128,16 +131,20 @@ tr:hover td{background:#faf8f4}
 .week-task{font-size:.78rem;background:var(--berry-pale);color:var(--berry);border-radius:6px;padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:5px}
 .week-task.done{background:var(--leaf-light);color:var(--leaf);text-decoration:line-through;opacity:.75}
 .week-empty{font-size:.72rem;color:#ccc;padding:4px 0}
-.monthly-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px}
 .monthly-hd{text-align:center;font-size:.65rem;font-weight:700;color:#888;padding:3px}
 .monthly-hd.sun{color:var(--rose)}.monthly-hd.sat{color:var(--blue-mid)}
-.monthly-cell{border-radius:6px;padding:4px 3px;min-height:52px;background:#faf8f4;border:1px solid var(--line);font-size:.6rem}
+.monthly-wrap{width:100%;overflow:hidden;box-sizing:border-box;max-width:100%;display:block}
+.monthly-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;margin-bottom:3px;width:100%;box-sizing:border-box}
+.monthly-hd{text-align:center;font-size:.6rem;font-weight:700;color:#888;padding:2px 0}
+.monthly-hd.sun{color:var(--rose)}.monthly-hd.sat{color:var(--blue-mid)}
+.monthly-cell{border-radius:3px;padding:1px;min-height:44px;max-height:76px;overflow:hidden;background:#faf8f4;border:1px solid var(--line);box-sizing:border-box;position:relative;width:100%;max-width:100%}
 .monthly-cell.other-month{background:white;border-color:#eee;opacity:.5}
 .monthly-cell.today{background:var(--berry-pale);border-color:var(--berry-mid)}
-.monthly-cell-date{font-weight:700;color:#666;text-align:center;margin-bottom:2px;font-size:.68rem}
+.monthly-cell-date{font-weight:700;color:#666;text-align:center;margin-bottom:1px;font-size:9px;line-height:1.3;-webkit-text-size-adjust:none;text-size-adjust:none}
 .monthly-cell.today .monthly-cell-date{color:var(--berry)}
-.monthly-task{background:var(--berry-pale);color:var(--berry);border-radius:3px;padding:1px 3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;font-size:.58rem}
+.monthly-task{background:var(--berry-pale);color:var(--berry);border-radius:2px;padding:0 1px;margin-bottom:1px;overflow:hidden;text-overflow:ellipsis;cursor:pointer;font-size:9px;display:block;width:100%;max-width:100%;box-sizing:border-box;white-space:nowrap;line-height:1.4;-webkit-text-size-adjust:none;text-size-adjust:none}
 .monthly-task.done{background:var(--leaf-light);color:var(--leaf);text-decoration:line-through}
+.monthly-more{font-size:.48rem;color:#aaa;text-align:center;line-height:1.2;overflow:hidden}
 
 /* ===== 計画立案コマンド ===== */
 .cmd-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:10px;border:2px solid var(--berry);background:white;color:var(--berry);font-size:.85rem;font-weight:700;cursor:pointer;transition:all .18s;width:100%;justify-content:center;margin-bottom:8px}
@@ -833,17 +840,27 @@ function syncStatus(type, msg) {
   };
   var icons = {loading:'🔄',saving:'💾',ok:'✅',error:'❌'};
   el.style.cssText = styles[type] || styles.ok;
-  el.innerHTML = (icons[type]||'') + ' ' + msg;
+  // エラー時は「タップして再読み込み」ボタンを表示
+  if(type==='error'){
+    el.innerHTML = (icons[type]||'') + ' ' + msg
+      + ' <span onclick="loadAll()" style="cursor:pointer;text-decoration:underline;margin-left:8px;font-weight:700">🔄 再読み込み</span>';
+  } else {
+    el.innerHTML = (icons[type]||'') + ' ' + msg;
+  }
 }
 
 function gasCall(params, cb) {
+  // キャッシュ無効化のためタイムスタンプを付加
   var url = GAS_URL + '?' + Object.keys(params).map(function(k){
     return encodeURIComponent(k)+'='+encodeURIComponent(params[k]);
-  }).join('&');
+  }).join('&') + '&_t=' + Date.now();
   fetch(url)
     .then(function(r){ return r.json(); })
     .then(function(j){ if(j.ok) cb(null,j.data); else cb(j.error||'エラー'); })
-    .catch(function(e){ cb(e.message||'通信エラー'); });
+    .catch(function(e){
+      console.warn('GAS通信エラー:', e.message);
+      cb(e.message||'通信エラー');
+    });
 }
 
 function gasPost(params, cb) {
@@ -911,7 +928,7 @@ function pushItem(sheet, item) {
   } catch(e) { console.warn('localStorage保存失敗:', e); }
   syncStatus('saving','保存中...');
   gasPost({action:'save', sheet:sheet, data:JSON.stringify(item)}, function(err) {
-    if (err) syncStatus('error','オフライン：ローカルに保存しました');
+    if (err) syncStatus('error','オフライン：ローカルに保存しました（他端末への反映は接続後）');
     else syncStatus('ok','保存しました（'+new Date().toLocaleTimeString('ja-JP')+'）');
   });
 }
@@ -1278,7 +1295,7 @@ function renderMonthlyPlan() {
   var DAY_NAMES = ['日','月','火','水','木','金','土'];
 
   // カレンダー描画
-  var html = '<div class="monthly-grid">';
+  var html = '<div class="monthly-wrap"><div class="monthly-grid">';
   DAY_NAMES.forEach(function(d,i){
     html += '<div class="monthly-hd'+(i===0?' sun':i===6?' sat':'')+'">' + d + '</div>';
   });
@@ -1293,9 +1310,16 @@ function renderMonthlyPlan() {
     // その日に日付が設定されているタスクのみ表示
     var cellDateStr = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     var dayTasks = monthPlans.filter(function(p){ return p.date===cellDateStr; });
-    var taskHtml = dayTasks.map(function(p){
-      return '<div class="monthly-task'+(p.done?' done':'')+'" onclick="togglePlan('+p.id+')" title="'+p.task+'">'+p.cat.split(' ')[0]+' '+p.task+'</div>';
+    var maxShow = 3;
+    var maxShow = 3;
+    var taskHtml = dayTasks.slice(0, maxShow).map(function(p){
+      var ico = p.cat.split(' ')[0];
+      var nm = p.task.length > 5 ? p.task.substring(0,5)+'…' : p.task;
+      return '<div class="monthly-task'+(p.done?' done':'')+'" onclick="togglePlan('+p.id+')" title="'+p.task+'">'+ico+' '+nm+'</div>';
     }).join('');
+    if(dayTasks.length > maxShow){
+      taskHtml += '<div class="monthly-more">+' + (dayTasks.length-maxShow)+'</div>';
+    }
     html += '<div class="monthly-cell'+(isToday?' today':'')+'">'
       +'<div class="monthly-cell-date" style="'+dateStyle+'">'+d+'</div>'
       +taskHtml+'</div>';
@@ -1305,7 +1329,7 @@ function renderMonthlyPlan() {
   for (var r=1; r<=remaining; r++) {
     html += '<div class="monthly-cell other-month"><div class="monthly-cell-date">'+r+'</div></div>';
   }
-  html += '</div>';
+  html += '</div></div>'; // monthly-grid + monthly-wrap を閉じる
 
   // タスクリスト（日付入力でカレンダーにリアルタイム反映）
   html += '<div style="margin-top:14px">';
